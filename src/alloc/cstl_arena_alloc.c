@@ -28,8 +28,14 @@ cstl_alloc_result cstl_arena_alloc(cstl_arena *arena, size_t size,
   if (arena->used > arena->size)
     return ALLOC_INVALID_STATE;
 
+  if (size == 0)
+    return ALLOC_INVALID_SIZE;
+
   if (size > arena->size - arena->used)
     return ALLOC_OUT_OF_MEMORY;
+
+  if (!out)
+    return ALLOC_INVALID_OUT;
 
   *out = arena->begin + arena->used;
   arena->used += size;
