@@ -138,6 +138,60 @@ void test_alloc_exact_fit_keeps_invariant(void) {
   TEST_ASSERT_TRUE(arena.used <= arena.size);
 }
 
+void test_create_valid() {
+  cstl_arena out;
+
+  TEST_ASSERT_EQUAL(ALLOC_SUCCESS, cstl_arena_create(ARENA_MEDIUM_SIZE, &out));
+
+  unsigned char *ptr;
+
+  TEST_ASSERT_EQUAL(0, out.used);
+  TEST_ASSERT_EQUAL(ALLOC_SUCCESS,
+                    cstl_arena_alloc(&out, ARENA_MEDIUM_SIZE, &ptr));
+  TEST_ASSERT_EQUAL(ARENA_MEDIUM_SIZE, out.size);
+  TEST_ASSERT_EQUAL(ARENA_MEDIUM_SIZE, out.used);
+}
+
+void test_create_null_out() {
+  TEST_ASSERT_EQUAL(ALLOC_INVALID_OUT,
+                    cstl_arena_create(ARENA_MEDIUM_SIZE, NULL));
+}
+
+void test_create_zero_size() {
+  cstl_arena out;
+
+  TEST_ASSERT_EQUAL(ALLOC_INVALID_SIZE, cstl_arena_create(0, &out));
+}
+
+void test_create_failure_out_unchanged() {
+  cstl_arena out = {0};
+  out.begin = NULL;
+
+  TEST_ASSERT_EQUAL(ALLOC_INVALID_SIZE, cstl_arena_create(0, &out));
+  TEST_ASSERT_EQUAL(0, out.size);
+  TEST_ASSERT_EQUAL(0, out.used);
+  TEST_ASSERT_EQUAL_PTR(NULL, out.begin);
+}
+
+// TODO: wrap mmap to allow failure testing.
+// TODO: write destruction and reset tests.
+
+void test_free_valid() {
+  cstl_arena out;
+
+  TEST_ASSERT_EQUAL(ALLOC_SUCCESS, cstl_arena_create(ARENA_MEDIUM_SIZE, &out));
+
+  TEST_ASSERT_EQUAL(ALLOC_SUCCESS, cstl_arena_free(&out));
+
+  TEST_ASSERT_EQUAL(NULL, out.begin);
+  TEST_ASSERT_EQUAL(0, out.size);
+  TEST_ASSERT_EQUAL(0, out.used);
+}
+
+void test_free_null_arena() {
+  TEST_ASSERT_EQUAL(ALLOC_INVALID_ARENA, cstl_arena_free(NULL));
+}
+
 void tearDown() {}
 
 int main(void) {
@@ -158,6 +212,12 @@ int main(void) {
   RUN_TEST(test_alloc_null_out);
   RUN_TEST(test_alloc_zero_size_does_not_modify_state);
   RUN_TEST(test_alloc_exact_fit_keeps_invariant);
+  RUN_TEST(test_create_valid);
+  RUN_TEST(test_create_null_out);
+  RUN_TEST(test_create_zero_size);
+  RUN_TEST(test_create_failure_out_unchanged);
+  RUN_TEST(test_free_valid);
+  RUN_TEST(test_free_null_arena);
 
   return UNITY_END();
 }

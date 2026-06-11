@@ -1,6 +1,10 @@
 #include "../../include/alloc/cstl_arena_alloc.h"
 
 cstl_alloc_result cstl_arena_create(size_t size, cstl_arena *out) {
+  if (!out)
+    return ALLOC_INVALID_OUT;
+
+  // TODO: wrap mmap call for testing purposes.
   unsigned char *memory = mmap(NULL, size, PROT_READ | PROT_WRITE,
                                MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (memory == MAP_FAILED)
@@ -49,6 +53,10 @@ cstl_alloc_result cstl_arena_free(cstl_arena *arena) {
 
   if (munmap(arena->begin, arena->size) != 0)
     return ALLOC_INVALID_ARENA;
+
+  arena->begin = NULL;
+  arena->used = 0;
+  arena->size = 0;
 
   return ALLOC_SUCCESS;
 }
